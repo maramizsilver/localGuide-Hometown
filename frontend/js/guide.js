@@ -1,23 +1,22 @@
 // frontend/js/guide.js
 import { supabase } from './supabaseClient.js'
+
 let allGuides = []
 let activeFilter = "Tous"
 let currentSort = "rating"
 let currentUser = null
 
-// IMAGES DE COUVERTURE PAR DÉFAUT (locales)
 const DEFAULT_IMAGES = {
-    'Gastronomie': '../images/gastronomie.jpg',
-    'Nocturne': '../images/nocturne.jpg',
-    'Pêche': '../images/peche.jpg',
-    'Artisanat': '../images/artisanat.jpg',
-    'Histoire': '../images/histoire.jpg',
-    'Art': '../images/art.jpg',
-    'Mer & Port': '../images/peche.jpg',
-    'default': '../images/default.jpg'
+    'Gastronomie': 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop',
+    'Nocturne': 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&h=300&fit=crop',
+    'Pêche': 'https://images.unsplash.com/photo-1534551767220-0af7f846ad2a?w=400&h=300&fit=crop',
+    'Artisanat': 'https://images.unsplash.com/photo-1532453288672-3a27e9be9efd?w=400&h=300&fit=crop',
+    'Histoire': 'https://images.unsplash.com/photo-1461360228754-6e81c478b882?w=400&h=300&fit=crop',
+    'Art': 'https://images.unsplash.com/photo-1536924940845-2273b31e2b35?w=400&h=300&fit=crop',
+    'Mer & Port': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=300&fit=crop',
+    'default': 'https://images.unsplash.com/photo-1508672019048-805c876b67e2?w=400&h=300&fit=crop'
 }
 
-//  AVATARS PAR DÉFAUT
 const DEFAULT_AVATARS = {
     'Gastronomie': 'https://randomuser.me/api/portraits/men/32.jpg',
     'Nocturne': 'https://randomuser.me/api/portraits/men/91.jpg',
@@ -28,7 +27,6 @@ const DEFAULT_AVATARS = {
     'default': 'https://randomuser.me/api/portraits/lego/1.jpg'
 }
 
-//  PRIX PAR CATÉGORIE
 const CATEGORY_PRICES = {
     'Gastronomie': 60,
     'Histoire': 50,
@@ -38,41 +36,8 @@ const CATEGORY_PRICES = {
     'Art': 55,
     'default': 55
 }
-//  GUIDES PAR DÉFAUT
-const DEFAULT_GUIDES = [
-    {
-        id: 'default-gastronomie',
-        name: 'Jean Dupont',
-        specialty: 'Cuisine traditionnelle',
-        category: 'Gastronomie',
-        description: 'Découvrez les meilleurs restaurants et spécialités culinaires de Monastir.',
-        tags: ['Français', 'Anglais'],
-        rating: 4.8,
-        reviews: 127,
-        price: 60,
-        available: 'available',
-        cover: DEFAULT_IMAGES['Gastronomie'],
-        avatar: DEFAULT_AVATARS['Gastronomie'],
-        featured: true,
-        isDefault: true
-    },
-    {
-        id: 'default-mer-port',
-        name: 'Ahmed Khemiri',
-        specialty: 'Pêche et navigation',
-        category: 'Mer & Port',
-        description: 'Passionné de la mer, je vous fais découvrir les plus beaux spots de pêche.',
-        tags: ['Français', 'Arabe'],
-        rating: 4.9,
-        reviews: 98,
-        price: 70,
-        available: 'available',
-        cover: DEFAULT_IMAGES['Mer & Port'],
-        avatar: DEFAULT_AVATARS['Mer & Port'],
-        featured: true,
-        isDefault: true
-    },
 
+const DEFAULT_GUIDES = [
     {
         id: 'default-histoire',
         name: 'Mohamed Ali',
@@ -139,7 +104,6 @@ const DEFAULT_GUIDES = [
     }
 ]
 
-// 1. RÉCUPÉRER L'UTILISATEUR CONNECTÉ
 async function getCurrentUser() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
@@ -163,12 +127,10 @@ async function getCurrentUser() {
     }
 }
 
-// 2. MODIFIER UN GUIDE
 async function modifierGuide(id) {
     const guide = allGuides.find(g => g.id === id)
     if (!guide) return
     
-    // Vérifier les droits
     const canEdit = currentUser && (currentUser.isAdmin || (guide.user_id && currentUser.id === guide.user_id))
     
     if (!canEdit) {
@@ -177,7 +139,7 @@ async function modifierGuide(id) {
     }
     
     if (guide.isDefault) {
-        alert(' Les guides par défaut ne peuvent pas être modifiés')
+        alert('Les guides par défaut ne peuvent pas être modifiés')
         return
     }
     
@@ -189,10 +151,10 @@ async function modifierGuide(id) {
             .eq('id', id)
         
         if (error) {
-            alert(' Erreur: ' + error.message)
+            alert('Erreur: ' + error.message)
         } else {
             guide.name = nouveauNom
-            alert(' Guide modifié avec succès !')
+            alert('Guide modifié avec succès !')
             await renderGrid()
         }
     }
@@ -208,7 +170,7 @@ async function modifierGuide(id) {
             alert('Erreur: ' + error.message)
         } else {
             guide.specialty = nouvelleSpecialite
-            alert(' Spécialité modifiée !')
+            alert('Spécialité modifiée !')
             await renderGrid()
         }
     }
@@ -220,28 +182,23 @@ async function modifierGuide(id) {
             .update({ prix_guide: parseInt(nouveauPrix) })
             .eq('id', id)
         if (error) {
-        
-            alert(' Erreur: ' + error.message)
+            alert('Erreur: ' + error.message)
         } else {
             guide.price = parseInt(nouveauPrix)
-            alert(' Prix modifié !')
+            alert('Prix modifié !')
             await renderGrid()
         }
     }
 }
 
-
-// 3. SUPPRIMER UN GUIDE
-
 async function supprimerGuide(id) {
     const guide = allGuides.find(g => g.id === id)
     if (!guide) return
     
-    // Vérifier les droits
     const canDelete = currentUser && (currentUser.isAdmin || (guide.user_id && currentUser.id === guide.user_id))
     
     if (!canDelete) {
-        alert(' Vous n\'avez pas le droit de supprimer ce guide')
+        alert('Vous n\'avez pas le droit de supprimer ce guide')
         return
     }
     
@@ -250,7 +207,7 @@ async function supprimerGuide(id) {
         return
     }
     
-    if (!confirm(` Supprimer définitivement le guide "${guide.name}" ?`)) return
+    if (!confirm(`Supprimer définitivement le guide "${guide.name}" ?`)) return
     
     const { error } = await supabase
         .from('guides')
@@ -260,11 +217,10 @@ async function supprimerGuide(id) {
     if (error) {
         alert('Erreur: ' + error.message)
     } else {
-        alert(' Guide supprimé avec succès !')
+        alert('Guide supprimé avec succès !')
         await renderGrid()
     }
 }
-// 4. CHARGER LES GUIDES
 
 async function loadGuidesFromSupabase() {
     console.log('Chargement des guides depuis Supabase...')
@@ -347,7 +303,7 @@ function adaptGuideData(supabaseGuide) {
         cover: coverImage,
         avatar: avatarImage,
         featured: supabaseGuide.mise_en_avant || false,
-        phone: supabaseGuide.phone,
+        phone: supabaseGuide.telephone,
         email: supabaseGuide.email,
         user_id: supabaseGuide.user_id,
         created_at: supabaseGuide.created_at,
@@ -370,9 +326,6 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;')
 }
 
-// ============================================
-// 5. RÉSERVATION
-// ============================================
 async function bookGuide(id) {
     const guide = allGuides.find((x) => String(x.id) === String(id))
     
@@ -384,7 +337,7 @@ async function bookGuide(id) {
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-        const confirmLogin = confirm(' Vous devez être connecté pour réserver.\nVoulez-vous vous connecter ?')
+        const confirmLogin = confirm('Vous devez être connecté pour réserver.\nVoulez-vous vous connecter ?')
         if (confirmLogin) {
             window.location.href = 'login.html'
         }
@@ -407,9 +360,10 @@ async function bookGuide(id) {
     }
     const formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`
     
-    const finalConfirm = confirm(` Confirmation de réservation :\n\n` +
+    const finalConfirm = confirm(`Confirmation de réservation :\n\n` +
         `Guide: ${guide.name}\n` +
         `Client: ${clientName}\n` +
+        `Téléphone: ${clientPhone}\n` +
         `Date: ${dateReservation}\n` +
         `Prix: ${guide.price} TND\n\n` +
         `Confirmer ?`)
@@ -424,16 +378,16 @@ async function bookGuide(id) {
             guide_nom: guide.name,
             guide_specialite: guide.specialty,
             client_nom: clientName,
-            client_phone: clientPhone,
+            client_telephone: clientPhone,
             date: formattedDate,
             prix_total: guide.price,
             statut: 'confirmee'
         })
     
     if (error) {
-        alert(' Erreur: ' + error.message)
+        alert('Erreur: ' + error.message)
     } else {
-        alert(` Réservation confirmée !\n\nGuide: ${guide.name}\nDate: ${dateReservation}\nTotal: ${guide.price} TND`)
+        alert(`Réservation confirmée !\n\nGuide: ${guide.name}\nDate: ${dateReservation}\nTotal: ${guide.price} TND`)
     }
 }
 
@@ -442,27 +396,33 @@ function viewProfile(id) {
     if (g) {
         alert(`FICHE GUIDE\n\n` +
             `Nom: ${g.name}\n` +
-            ` Spécialité: ${g.specialty}\n` +
-            ` Tarif: ${g.price} TND\n` +
-            ` Note: ${g.rating.toFixed(1)} (${g.reviews} avis)\n` +
-            `📞 Téléphone: ${g.phone || 'Non renseigné'}\n\n` +
-            ` Description:\n${g.description}`)
+            `Spécialité: ${g.specialty}\n` +
+            `Tarif: ${g.price} TND\n` +
+            `Note: ${g.rating.toFixed(1)} (${g.reviews} avis)\n` +
+            `Téléphone: ${g.phone || 'Non renseigné'}\n\n` +
+            `Description:\n${g.description}`)
     }
 }
 
-// ============================================
-// 6. AFFICHAGE DES GUIDES
-// ============================================
 async function renderGrid() {
     const supabaseGuides = await loadGuidesFromSupabase()
     const adaptedGuides = supabaseGuides.map(adaptGuideData)
     
     if (adaptedGuides.length === 0) {
         allGuides = [...DEFAULT_GUIDES]
-    } else if (adaptedGuides.length < 6) {
-        allGuides = [...adaptedGuides, ...DEFAULT_GUIDES.slice(0, 6 - adaptedGuides.length)]
     } else {
-        allGuides = adaptedGuides
+        const existingCategories = new Set(adaptedGuides.map(g => g.category))
+        const additionalDefaults = DEFAULT_GUIDES.filter(defaultGuide => 
+            !existingCategories.has(defaultGuide.category)
+        )
+        allGuides = [...adaptedGuides, ...additionalDefaults]
+        
+        if (allGuides.length < 6 && additionalDefaults.length === 0) {
+            const remainingDefaults = DEFAULT_GUIDES.filter(g => 
+                !allGuides.some(existing => existing.category === g.category)
+            )
+            allGuides = [...allGuides, ...remainingDefaults.slice(0, 6 - allGuides.length)]
+        }
     }
     
     let list = [...allGuides]
@@ -502,23 +462,22 @@ async function renderGrid() {
         const fallbackImage = getDefaultImage(g.category)
         const fallbackAvatar = getDefaultAvatar(g.category)
         
-        // Vérifier si l'utilisateur peut modifier/supprimer ce guide
         const canEdit = currentUser && (currentUser.isAdmin || (g.user_id && currentUser.id === g.user_id)) && !g.isDefault
         
         const adminButtons = canEdit ? `
             <div class="guide-actions">
-                <button class="btn-edit-guide" onclick="modifierGuide('${g.id}')"> Modifier</button>
-                <button class="btn-delete-guide" onclick="supprimerGuide('${g.id}')"> Supprimer</button>
+                <button class="btn-edit-guide" onclick="modifierGuide('${g.id}')">✏️ Modifier</button>
+                <button class="btn-delete-guide" onclick="supprimerGuide('${g.id}')">🗑️ Supprimer</button>
             </div>
         ` : ''
         
         return `
-            <article class="card ${g.featured ? "featured" : ""}" data-id="${g.id}" style="height: 100%; display: flex; flex-direction: column;">
-                <div class="card-image" style="height: 200px; flex-shrink: 0;">
-                    <img src="${g.cover}" alt="${escapeHtml(g.name)}" loading="lazy" onerror="this.src='${fallbackImage}'" style="width: 100%; height: 100%; object-fit: cover;">
+            <article class="card ${g.featured ? "featured" : ""}" data-id="${g.id}">
+                <div class="card-image">
+                    <img src="${g.cover}" alt="${escapeHtml(g.name)}" loading="lazy" onerror="this.src='${fallbackImage}'">
                     <span class="card-badge">${escapeHtml(g.specialty)}</span>
                 </div>
-                <div class="card-body" style="flex: 1; display: flex; flex-direction: column;">
+                <div class="card-body">
                     ${g.featured ? '<span class="featured-label">⭐ Guide en vedette</span>' : ''}
                     <div class="card-header">
                         <img src="${g.avatar}" alt="${escapeHtml(g.name)}" class="guide-avatar" onerror="this.src='${fallbackAvatar}'">
@@ -527,7 +486,7 @@ async function renderGrid() {
                             <div class="card-specialty">${escapeHtml(g.category)}</div>
                         </div>
                     </div>
-                    <p class="card-desc" style="flex: 1;">${escapeHtml(g.description.substring(0, 100))}...</p>
+                    <p class="card-desc">${escapeHtml(g.description.substring(0, 100))}...</p>
                     <div class="card-tags">${tags}</div>
                     <div class="card-footer">
                         <div class="card-rating">
@@ -535,13 +494,13 @@ async function renderGrid() {
                             <span class="rating-num">${g.rating.toFixed(1)}</span>
                             <span class="review-count">(${g.reviews} avis)</span>
                         </div>
-                        <div class="card-price" style="font-size: 1.1rem; font-weight: bold; color: #d42b2b;">
-                            ${g.price} TND <span style="font-size: 0.75rem;">/ pers.</span>
+                        <div class="card-price">
+                            ${g.price} TND <span>/ pers.</span>
                         </div>
                     </div>
-                    <div class="card-cta" style="margin-top: 16px; display: flex; gap: 10px;">
-                        <button class="btn-book" onclick="bookGuide('${g.id}')" style="flex: 2;">📅 Réserver</button>
-                        <button class="btn-profile" onclick="viewProfile('${g.id}')" style="width: 40px;">👤</button>
+                    <div class="card-cta">
+                        <button class="btn-book" onclick="bookGuide('${g.id}')">📅 Réserver</button>
+                        <button class="btn-profile" onclick="viewProfile('${g.id}')">👤</button>
                     </div>
                     ${adminButtons}
                 </div>
@@ -556,7 +515,6 @@ function setFilter(cat, el) {
     renderGrid()
 }
 
-// Exposer globalement
 window.bookGuide = bookGuide
 window.viewProfile = viewProfile
 window.setFilter = setFilter
@@ -564,10 +522,9 @@ window.renderGrid = renderGrid
 window.modifierGuide = modifierGuide
 window.supprimerGuide = supprimerGuide
 
-// INITIALISATION
 document.addEventListener('DOMContentLoaded', async () => {
     currentUser = await getCurrentUser()
-    console.log('👤 Utilisateur:', currentUser?.email || 'Non connecté')
+    console.log('Utilisateur:', currentUser?.email || 'Non connecté')
     await renderGrid()
     
     supabase

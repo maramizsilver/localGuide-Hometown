@@ -117,7 +117,7 @@ function initNavbarScroll() {
 
 // ============================================
 // 4. VÉRIFICATION ADMIN (pour page admin.html)
-// ============================================
+
 async function checkAdminAccess() {
     const { data: { user } } = await supabase.auth.getUser()
     
@@ -145,9 +145,9 @@ async function checkAdminAccess() {
     return true
 }
 
-// ============================================
+
 // 5. VÉRIFICATION CONNEXION (pour pages protégées)
-// ============================================
+
 async function checkAuth() {
     const { data: { user } } = await supabase.auth.getUser()
     
@@ -159,14 +159,14 @@ async function checkAuth() {
     return true
 }
 
-// ============================================
+
 // 6. EXPORT (AJOUT DE updateHomeButtons)
-// ============================================
+
 export { updateNavbar, updateHomeButtons, initNavbarScroll, checkAdminAccess, checkAuth }
 
-// ============================================
+
 // 7. INITIALISATION AUTO (AJOUT DE updateHomeButtons)
-// ============================================
+
 document.addEventListener('DOMContentLoaded', async () => {
     await updateNavbar()
     await updateHomeButtons()  // ← AJOUTÉ
